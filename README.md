@@ -1,6 +1,10 @@
-# Mina zkApp: Zkcred
+# ZK-Cred
 
-This template uses TypeScript.
+## Zero Knowledge Verifiable Credential Selective Disclosure Presentation
+
+See [notes](./notes.md)
+
+# Build stuff
 
 ## How to build
 
