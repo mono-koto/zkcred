@@ -1,3 +1,3 @@
-import { Add } from './Add.js';
+import { SelectiveDiscloser } from './SelectiveDiscloser.js';
 
-export { Add };
+export { SelectiveDiscloser };
