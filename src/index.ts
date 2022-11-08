@@ -1,3 +1,3 @@
-import { SelectiveDiscloser } from './SelectiveDiscloser.js';
+import { CredFilter } from './CredFilter';
 
-export { SelectiveDiscloser };
+export { CredFilter };
