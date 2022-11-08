@@ -1,12 +1,15 @@
 import {
   AccountUpdate,
+  Field,
   isReady,
   Mina,
   PrivateKey,
   PublicKey,
   shutdown,
+  Signature,
 } from 'snarkyjs';
 import { CredFilter } from './CredFilter';
+// import UnprovenVC from './unproven-vc-template.json';
 
 /*
  * This file specifies how to test the `Add` example smart contract. It is safe to delete this file and replace
@@ -36,21 +39,6 @@ async function localDeploy(
   await txn.send().wait();
 }
 
-const keys = {
-  Bob: PrivateKey.fromBase58(
-    'EKFAdBGSSXrBbaCVqy4YjwWHoGEnsqYRQTqz227Eb5bzMx2bWu3F'
-  ),
-  SuperBob: PrivateKey.fromBase58(
-    'EKEitxmNYYMCyumtKr8xi1yPpY3Bq6RZTEQsozu2gGf44cNxowmg'
-  ),
-  MegaBob: PrivateKey.fromBase58(
-    'EKE9qUDcfqf6Gx9z6CNuuDYPe4XQQPzFBCfduck2X4PeFQJkhXtt'
-  ), // This one says duck in it :)
-  Jack: PrivateKey.fromBase58(
-    'EKFS9v8wxyrrEGfec4HXycCC2nH7xf79PtQorLXXsut9WUrav4Nw'
-  ),
-};
-
 let deployerAccount: PrivateKey,
   zkAppAddress: PublicKey,
   zkAppPrivateKey: PrivateKey;
@@ -72,16 +60,53 @@ afterAll(async () => {
 describe('CredFilter', () => {
   describe('init()', () => {
     it('should deploy with public key', async () => {
-      const privateKey = keys['Bob'];
+      const privateKey = PrivateKey.random();
       const publicKey = privateKey.toPublicKey();
-
       const zkAppInstance = new CredFilter(zkAppAddress);
       await localDeploy(zkAppInstance, zkAppPrivateKey, deployerAccount, [
         publicKey,
       ]);
 
-      const user1 = await zkAppInstance.user1.get();
-      expect(user1.toBase58()).toEqual(publicKey.toBase58());
+      const issuerPublicKey = await zkAppInstance.issuerPublicKey.get();
+      expect(issuerPublicKey.toBase58()).toEqual(publicKey.toBase58());
+    });
+  });
+
+  describe('selectivelyVerify()', () => {
+    let issuerPrivateKey: PrivateKey;
+    let zkAppInstance: CredFilter;
+    beforeEach(async () => {
+      issuerPrivateKey = PrivateKey.random();
+      const publicKey = issuerPrivateKey.toPublicKey();
+      zkAppInstance = new CredFilter(zkAppAddress);
+      await localDeploy(zkAppInstance, zkAppPrivateKey, deployerAccount, [
+        publicKey,
+      ]);
+    });
+
+    it('should verify with public key', async () => {
+      const holderPrivateKey = PrivateKey.random();
+
+      const credentialSubjectId = new Field(0);
+      const credentialSubjectData1 = new Field(0);
+      const credentialSubjectData2 = new Field(0);
+      const credentialSubjectProof = Signature.create(issuerPrivateKey, [
+        credentialSubjectId,
+        credentialSubjectData1,
+        credentialSubjectData2,
+      ]);
+      const issuer = new Field(0);
+      const issuerProof = Signature.create(issuerPrivateKey, [issuer]);
+
+      zkAppInstance.selectivelyVerify(
+        holderPrivateKey,
+        credentialSubjectId,
+        credentialSubjectData1,
+        credentialSubjectData2,
+        credentialSubjectProof,
+        issuer,
+        issuerProof
+      );
     });
   });
 });

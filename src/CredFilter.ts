@@ -1,16 +1,16 @@
 import {
+  DeployArgs,
+  Encoding,
   Field,
+  isReady,
+  method,
+  Permissions,
+  PrivateKey,
+  PublicKey,
+  Signature,
   SmartContract,
   state,
   State,
-  method,
-  PrivateKey,
-  PublicKey,
-  isReady,
-  Poseidon,
-  Encoding,
-  DeployArgs,
-  Permissions,
 } from 'snarkyjs';
 
 export { isReady, Field, Encoding };
@@ -19,9 +19,11 @@ export { isReady, Field, Encoding };
 await isReady;
 
 export class CredFilter extends SmartContract {
-  @state(PublicKey) user1 = State<PublicKey>();
-  @state(Field) message = State<Field>();
-  @state(Field) messageHistoryHash = State<Field>();
+  @state(PublicKey) issuerPublicKey = State<PublicKey>();
+
+  events = {
+    'passed-test': PublicKey,
+  };
 
   deploy(args: DeployArgs) {
     super.deploy(args);
@@ -32,21 +34,35 @@ export class CredFilter extends SmartContract {
   }
 
   @method init(publicKey: PublicKey) {
-    this.user1.set(publicKey);
-    this.message.set(Field(0));
-    this.messageHistoryHash.set(Field(0));
+    this.issuerPublicKey.set(publicKey);
   }
 
-  @method publishMessage(message: Field, signerPrivateKey: PrivateKey) {
-    const signerPublicKey = signerPrivateKey.toPublicKey();
+  /// Holder can publish that they passed test
+  /// but only if the credential is (a) verified
+  /// and (b) privately passes the test.
+  @method selectivelyVerify(
+    holderPrivateKey: PrivateKey,
+    credentialSubjectId: Field,
+    credentialSubjectData1: Field,
+    credentialSubjectData2: Field,
+    credentialSubjectProof: Signature,
+    issuer: Field,
+    issuerProof: Signature
+  ) {
+    const signerPublicKey = holderPrivateKey.toPublicKey();
 
-    const user1 = this.user1.get();
-    signerPublicKey.equals(user1).assertEquals(true);
-    this.message.set(message);
+    this.issuerPublicKey.assertEquals(this.issuerPublicKey.get());
+    const key = this.issuerPublicKey.get();
+    credentialSubjectProof
+      .verify(key, [
+        credentialSubjectId,
+        credentialSubjectData1,
+        credentialSubjectData2,
+      ])
+      .assertTrue();
+    issuerProof.verify(key, [issuer]).assertTrue();
+    credentialSubjectData1.gte(credentialSubjectData2).assertTrue();
 
-    const oldHash = this.messageHistoryHash.get();
-    const newHash = Poseidon.hash([message, oldHash]);
-
-    this.messageHistoryHash.set(newHash);
+    this.emitEvent('passed-test', signerPublicKey);
   }
 }
