@@ -87,26 +87,25 @@ describe('CredFilter', () => {
     it('should verify with public key', async () => {
       const holderPrivateKey = PrivateKey.random();
 
-      const credentialSubjectId = new Field(0);
-      const credentialSubjectData1 = new Field(0);
-      const credentialSubjectData2 = new Field(0);
-      const credentialSubjectProof = Signature.create(issuerPrivateKey, [
-        credentialSubjectId,
-        credentialSubjectData1,
-        credentialSubjectData2,
-      ]);
-      const issuer = new Field(0);
-      const issuerProof = Signature.create(issuerPrivateKey, [issuer]);
-
-      zkAppInstance.selectivelyVerify(
-        holderPrivateKey,
-        credentialSubjectId,
-        credentialSubjectData1,
-        credentialSubjectData2,
-        credentialSubjectProof,
-        issuer,
-        issuerProof
-      );
+      const txn = await Mina.transaction(deployerAccount, () => {
+        zkAppInstance.selectivelyVerify(
+          holderPrivateKey,
+          new Field(0),
+          new Field(0),
+          new Field(0),
+          Signature.create(issuerPrivateKey, [
+            new Field(0),
+            new Field(0),
+            new Field(0),
+          ]),
+          new Field(0),
+          Signature.create(issuerPrivateKey, [new Field(0)])
+        );
+        zkAppInstance.sign(zkAppPrivateKey);
+      });
+      await txn.send().wait();
+      const events = await zkAppInstance.fetchEvents();
+      expect(events[0].type).toEqual('passed-test');
     });
   });
 });
