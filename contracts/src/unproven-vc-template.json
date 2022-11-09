@@ -1,0 +1,22 @@
+{
+  "@context": [
+    "https://www.w3.org/2018/credentials/v1",
+    "https://www.w3.org/2018/credentials/examples/v1"
+  ],
+  "type": ["VerifiableCredential"],
+  "credentialSchema": {
+    "id": "did:example:cdf:35LB7w9ueWbagPL94T9bMLtyXDj9pX5o",
+    "type": "did:example:schema:22KpkXgecryx9k7N6XN1QoN3gXwBkSU8SfyyYQG"
+  },
+  "issuer": "did:example:Wz4eUg7SetGfaUVCn8U9d62oDYrUJLuUtcy619",
+  "credentialSubject": {
+    "id": "did:example:ebfeb1f712ebc6f1c276e12ec21",
+    "data": [1, 2]
+  },
+  "proof": {
+    "type": "SnarkyProof5000",
+    "issuer": "SNARKYJS SIGNATURE OF issuer HERE",
+    "credentialSubjectId": "SNARKYJS SIGNATURE OF credentialSubject.id HERE",
+    "credentialSubjectData": "SNARKYJS SIGNATURE OF credentialSubject.data HERE"
+  }
+}
