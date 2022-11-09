@@ -18,7 +18,7 @@ export { isReady, Field, Encoding };
 // Wait till our SnarkyJS instance is ready
 await isReady;
 
-export class CredFilter extends SmartContract {
+export class SelectiveVCSketch extends SmartContract {
   @state(PublicKey) issuerPublicKey = State<PublicKey>();
 
   events = {
@@ -40,9 +40,9 @@ export class CredFilter extends SmartContract {
   /// Holder can publish that they passed test
   /// but only if the credential is (a) verified
   /// and (b) privately passes the test.
-  @method selectivelyVerify(
+  @method selectivelyDisclose(
     holderPrivateKey: PrivateKey,
-    credentialSubjectId: Field,
+    credentialSubjectId: PublicKey,
     credentialSubjectData1: Field,
     credentialSubjectData2: Field,
     credentialSubjectProof: Signature,
@@ -50,12 +50,15 @@ export class CredFilter extends SmartContract {
     issuerProof: Signature
   ) {
     const signerPublicKey = holderPrivateKey.toPublicKey();
+    credentialSubjectId.assertEquals(signerPublicKey);
+
+    signerPublicKey.toGroup().assertEquals(credentialSubjectId.toGroup());
 
     this.issuerPublicKey.assertEquals(this.issuerPublicKey.get());
     const key = this.issuerPublicKey.get();
     credentialSubjectProof
       .verify(key, [
-        credentialSubjectId,
+        ...credentialSubjectId.toFields(),
         credentialSubjectData1,
         credentialSubjectData2,
       ])

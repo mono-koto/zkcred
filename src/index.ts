@@ -1,3 +1,3 @@
-import { CredFilter } from './CredFilter';
+import { SelectiveVCSketch } from './SelectiveVCSketch';
 
-export { CredFilter };
+export { SelectiveVCSketch };

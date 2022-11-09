@@ -8,7 +8,7 @@ import {
   shutdown,
   Signature,
 } from 'snarkyjs';
-import { CredFilter } from './CredFilter';
+import { SelectiveVCSketch } from './SelectiveVCSketch';
 // import UnprovenVC from './unproven-vc-template.json';
 
 /*
@@ -25,7 +25,7 @@ function createLocalBlockchain() {
 }
 
 async function localDeploy(
-  zkAppInstance: CredFilter,
+  zkAppInstance: SelectiveVCSketch,
   zkAppPrivatekey: PrivateKey,
   deployerAccount: PrivateKey,
   args: [PublicKey]
@@ -57,12 +57,12 @@ afterAll(async () => {
   setTimeout(shutdown, 0);
 });
 
-describe('CredFilter', () => {
+describe('SelectiveVCSketch', () => {
   describe('init()', () => {
     it('should deploy with public key', async () => {
       const privateKey = PrivateKey.random();
       const publicKey = privateKey.toPublicKey();
-      const zkAppInstance = new CredFilter(zkAppAddress);
+      const zkAppInstance = new SelectiveVCSketch(zkAppAddress);
       await localDeploy(zkAppInstance, zkAppPrivateKey, deployerAccount, [
         publicKey,
       ]);
@@ -72,13 +72,13 @@ describe('CredFilter', () => {
     });
   });
 
-  describe('selectivelyVerify()', () => {
+  describe('selectivelyDisclose()', () => {
     let issuerPrivateKey: PrivateKey;
-    let zkAppInstance: CredFilter;
+    let zkAppInstance: SelectiveVCSketch;
     beforeEach(async () => {
       issuerPrivateKey = PrivateKey.random();
       const publicKey = issuerPrivateKey.toPublicKey();
-      zkAppInstance = new CredFilter(zkAppAddress);
+      zkAppInstance = new SelectiveVCSketch(zkAppAddress);
       await localDeploy(zkAppInstance, zkAppPrivateKey, deployerAccount, [
         publicKey,
       ]);
@@ -86,17 +86,18 @@ describe('CredFilter', () => {
 
     it('should verify with public key', async () => {
       const holderPrivateKey = PrivateKey.random();
+      const holderPublicKey = holderPrivateKey.toPublicKey();
 
       const txn = await Mina.transaction(deployerAccount, () => {
-        zkAppInstance.selectivelyVerify(
+        zkAppInstance.selectivelyDisclose(
           holderPrivateKey,
-          new Field(0),
-          new Field(0),
-          new Field(0),
+          holderPublicKey,
+          new Field(100),
+          new Field(99),
           Signature.create(issuerPrivateKey, [
-            new Field(0),
-            new Field(0),
-            new Field(0),
+            ...holderPublicKey.toFields(),
+            new Field(100),
+            new Field(99),
           ]),
           new Field(0),
           Signature.create(issuerPrivateKey, [new Field(0)])
@@ -106,6 +107,54 @@ describe('CredFilter', () => {
       await txn.send().wait();
       const events = await zkAppInstance.fetchEvents();
       expect(events[0].type).toEqual('passed-test');
+    });
+
+    it('should reject if bad values', async () => {
+      const holderPrivateKey = PrivateKey.random();
+      const holderPublicKey = holderPrivateKey.toPublicKey();
+
+      expect(async () =>
+        Mina.transaction(deployerAccount, () => {
+          zkAppInstance.selectivelyDisclose(
+            holderPrivateKey,
+            holderPublicKey,
+            new Field(0),
+            new Field(1),
+            Signature.create(issuerPrivateKey, [
+              ...holderPublicKey.toFields(),
+              new Field(0),
+              new Field(0),
+            ]),
+            new Field(0),
+            Signature.create(issuerPrivateKey, [new Field(0)])
+          );
+          zkAppInstance.sign(zkAppPrivateKey);
+        })
+      ).rejects;
+    });
+
+    it('should reject if mismatched subject', async () => {
+      const holderPrivateKey = PrivateKey.random();
+      const badHolderPublicKey = PrivateKey.random().toPublicKey();
+
+      expect(async () =>
+        Mina.transaction(deployerAccount, () => {
+          zkAppInstance.selectivelyDisclose(
+            holderPrivateKey,
+            badHolderPublicKey,
+            new Field(0),
+            new Field(0),
+            Signature.create(issuerPrivateKey, [
+              ...badHolderPublicKey.toFields(),
+              new Field(0),
+              new Field(0),
+            ]),
+            new Field(0),
+            Signature.create(issuerPrivateKey, [new Field(0)])
+          );
+          zkAppInstance.sign(zkAppPrivateKey);
+        })
+      ).rejects;
     });
   });
 });
