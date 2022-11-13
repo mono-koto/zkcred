@@ -1,10 +1,11 @@
 {
   "version": 1,
   "networks": {
-    "zkvc": {
+    "berkeley": {
       "url": "https://proxy.berkeley.minaexplorer.com/graphql",
-      "keyPath": "keys/zkvc.json",
-      "fee": "0.1"
+      "keyPath": "keys/berkeley.json",
+      "fee": "0.1",
+      "smartContract": "SelectiveVCSketch"
     }
   }
 }
