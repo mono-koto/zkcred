@@ -7,7 +7,15 @@ import {
   QueryClientProvider,
 } from "@tanstack/react-query";
 import React, { useCallback, useEffect } from "react";
+import {
+  fetchAccount,
+  isReady,
+  PublicKey,
+  setGraphqlEndpoint,
+  // SmartContract,
+} from "snarkyjs";
 import { Mina } from "./MinaTypes";
+import type { SmartContract } from "snarkyjs";
 
 type Props = {
   children?: React.ReactNode;
@@ -139,4 +147,44 @@ export function useVerifyMessage() {
     mutationFn: async (args: Mina.VerifyMessageArgs) =>
       window.mina.verifyMessage(args),
   });
+}
+
+export function useZkApp<T>(
+  address: string,
+  contract: Promise<any>,
+  name: string
+) {
+  const [zkApp, setZkApp] = React.useState<T | undefined>();
+  const [error, setError] = React.useState<any | undefined>();
+
+  useEffect(() => {
+    isReady
+      .then(async () => {
+        const ContractModule = await contract;
+        const ContractClass = ContractModule[name] as {
+          new (publicKey: PublicKey): T;
+          compile(): Promise<void>;
+        };
+        // await ContractClass.compile();
+        console.log("ContractClass", ContractClass);
+        const zkAppInstance = new ContractClass(
+          PublicKey.fromBase58(address)
+        ) as SmartContract;
+        setGraphqlEndpoint("https://proxy.berkeley.minaexplorer.com/graphql");
+        const account = await fetchAccount({
+          publicKey: zkAppInstance.address,
+        });
+        setZkApp(zkAppInstance as T);
+      })
+      .catch((error: any) => {
+        setError(error);
+      });
+  }, []);
+
+  return {
+    zkApp,
+    isLoading: !error && !zkApp,
+    error,
+    isError: !!error,
+  };
 }

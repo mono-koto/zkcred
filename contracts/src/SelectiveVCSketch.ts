@@ -1,8 +1,6 @@
 import {
   DeployArgs,
-  Encoding,
   Field,
-  isReady,
   method,
   Permissions,
   PrivateKey,
@@ -13,10 +11,10 @@ import {
   State,
 } from 'snarkyjs';
 
-export { isReady, Field, Encoding };
+// export { isReady, Field, Encoding };
 
-// Wait till our SnarkyJS instance is ready
-await isReady;
+// // Wait till our SnarkyJS instance is ready
+// await isReady;
 
 export class SelectiveVCSketch extends SmartContract {
   @state(PublicKey) issuerPublicKey = State<PublicKey>();
@@ -33,7 +31,7 @@ export class SelectiveVCSketch extends SmartContract {
     });
   }
 
-  @method init(publicKey: PublicKey) {
+  @method initKey(publicKey: PublicKey) {
     this.issuerPublicKey.set(publicKey);
   }
 

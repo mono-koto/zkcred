@@ -6,6 +6,12 @@
       "keyPath": "keys/berkeley.json",
       "fee": "0.1",
       "smartContract": "SelectiveVCSketch"
+    },
+    "berkeley-add": {
+      "url": "https://proxy.berkeley.minaexplorer.com/graphql",
+      "keyPath": "keys/berkeley-add.json",
+      "fee": "0.1",
+      "smartContract": "Add"
     }
   }
 }

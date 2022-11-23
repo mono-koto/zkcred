@@ -2,7 +2,7 @@ export namespace Mina {
   export interface SendTransactionArgs {
     transaction: any;
     feePayer?: {
-      fee?: number;
+      fee?: number | string;
       memo?: string;
     };
   }
