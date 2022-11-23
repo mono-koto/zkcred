@@ -12,6 +12,7 @@
     "deploy": "next build && next export && touch out/.nojekyll  && git add -f out && git commit -m \"Deploy gh-pages\" && cd .. && git subtree push --prefix ui/out origin gh-pages"
   },
   "dependencies": {
+    "@tanstack/react-query": "^4.16.1",
     "@types/node": "18.11.9",
     "@types/react": "18.0.25",
     "@types/react-dom": "18.0.8",
@@ -21,7 +22,7 @@
     "next": "13.0.2",
     "react": "18.2.0",
     "react-dom": "18.2.0",
-    "typescript": "4.8.4",
-    "snarkyjs": "0.*"
+    "snarkyjs": "0.*",
+    "typescript": "4.8.4"
   }
 }
