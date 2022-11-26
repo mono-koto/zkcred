@@ -1,4 +1,4 @@
 import { Add } from './Add.js';
-import { SelectiveVCSketch } from './SelectiveVCSketch.js';
+import { Selective } from './Selective';
 
-export { Add, SelectiveVCSketch };
+export { Add, Selective };

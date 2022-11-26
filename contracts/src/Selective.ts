@@ -1,43 +1,31 @@
 import {
-  DeployArgs,
   Field,
-  method,
-  Permissions,
-  PrivateKey,
-  PublicKey,
-  Signature,
   SmartContract,
   state,
   State,
+  method,
+  PublicKey,
+  PrivateKey,
+  Signature,
 } from 'snarkyjs';
 
-// export { isReady, Field, Encoding };
+const ISSUER_PUBLIC_KEY = PublicKey.fromBase58(
+  process.env.ISSUER_PUBLIC_KEY || ''
+);
+const OWNER_PUBLIC_KEY = PublicKey.fromBase58(
+  process.env.OWNER_PUBLIC_KEY || ''
+);
 
-// // Wait till our SnarkyJS instance is ready
-// await isReady;
+export class Selective extends SmartContract {
+  @state(PublicKey) owner = State<PublicKey>();
+  @state(PublicKey) issuer = State<PublicKey>();
 
-export class SelectiveVCSketch extends SmartContract {
-  @state(PublicKey) issuerPublicKey = State<PublicKey>();
-
-  events = {
-    'passed-test': PublicKey,
-  };
-
-  deploy(args: DeployArgs) {
-    super.deploy(args);
-    this.setPermissions({
-      ...Permissions.default(),
-      editState: Permissions.proofOrSignature(),
-    });
+  init() {
+    super.init();
+    this.owner.set(OWNER_PUBLIC_KEY);
+    this.issuer.set(ISSUER_PUBLIC_KEY);
   }
 
-  @method initKey(publicKey: PublicKey) {
-    this.issuerPublicKey.set(publicKey);
-  }
-
-  /// Holder can publish that they passed test
-  /// but only if the credential is (a) verified
-  /// and (b) privately passes the test.
   @method selectivelyDisclose(
     holderPrivateKey: PrivateKey,
     credentialSubjectId: PublicKey,
@@ -52,8 +40,8 @@ export class SelectiveVCSketch extends SmartContract {
 
     signerPublicKey.toGroup().assertEquals(credentialSubjectId.toGroup());
 
-    this.issuerPublicKey.assertEquals(this.issuerPublicKey.get());
-    const key = this.issuerPublicKey.get();
+    this.issuer.assertEquals(this.issuer.get());
+    const key = this.issuer.get();
     credentialSubjectProof
       .verify(key, [
         ...credentialSubjectId.toFields(),
