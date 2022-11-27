@@ -1,10 +1,12 @@
 import {
   AccountUpdate,
+  Field,
   isReady,
   Mina,
   PrivateKey,
   PublicKey,
   shutdown,
+  Signature,
 } from 'snarkyjs';
 import { Selective } from './Selective';
 
@@ -16,27 +18,6 @@ describe('Selective', () => {
     zkAppPrivateKey: PrivateKey,
     zkApp: Selective;
 
-  beforeAll(async () => {
-    await isReady;
-    if (proofsEnabled) Selective.compile();
-  });
-
-  beforeEach(() => {
-    const Local = Mina.LocalBlockchain({ proofsEnabled });
-    Mina.setActiveInstance(Local);
-    deployerAccount = Local.testAccounts[0].privateKey;
-    zkAppPrivateKey = PrivateKey.random();
-    zkAppAddress = zkAppPrivateKey.toPublicKey();
-    zkApp = new Selective(zkAppAddress);
-  });
-
-  afterAll(() => {
-    // `shutdown()` internally calls `process.exit()` which will exit the running Jest process early.
-    // Specifying a timeout of 0 is a workaround to defer `shutdown()` until Jest is done running all tests.
-    // This should be fixed with https://github.com/MinaProtocol/mina/issues/10943
-    setTimeout(shutdown, 0);
-  });
-
   async function localDeploy() {
     const txn = await Mina.transaction(deployerAccount, () => {
       AccountUpdate.fundNewAccount(deployerAccount);
@@ -47,139 +28,168 @@ describe('Selective', () => {
     await txn.sign([zkAppPrivateKey]).send();
   }
 
-  it('passes', () => {
-    expect(true).toBe(true);
+  beforeAll(async () => {
+    await isReady;
+    if (proofsEnabled) Selective.compile();
+  });
+
+  beforeEach(async () => {
+    const Local = Mina.LocalBlockchain({ proofsEnabled });
+    Mina.setActiveInstance(Local);
+    deployerAccount = Local.testAccounts[0].privateKey;
+    zkAppPrivateKey = PrivateKey.random();
+    zkAppAddress = zkAppPrivateKey.toPublicKey();
+    zkApp = new Selective(zkAppAddress);
+
+    await localDeploy();
+  });
+
+  afterAll(() => {
+    setTimeout(shutdown, 0);
   });
 
   it('generates and deploys the `Selective` smart contract', async () => {
-    await localDeploy();
-
     const owner = zkApp.owner.get();
-    expect(owner.toBase58()).toEqual(
-      'B62qiTKpEPjGTSHZrtM8uXiKgn8So916pLmNJKDhKeyBQL9TDb3nvBG'
-    );
+    expect(owner.toBase58()).toEqual(PublicKey.empty().toBase58());
 
     const issuer = zkApp.issuer.get();
-    expect(issuer.toBase58()).toEqual(
-      'B62qpKoe4nhvAuXPfy8MwawX5LtCyj8pbV8hMMsjPV2XdjgxQywohmw'
-    );
+    expect(issuer.toBase58()).toEqual(PublicKey.empty().toBase58());
   });
 
-  // describe('SelectiveDisclosure', () => {
-  //   describe('init()', () => {
-  //     it('should deploy with public key', async () => {
-  //       const privateKey = PrivateKey.random();
-  //       const publicKey = privateKey.toPublicKey();
-  //       const zkAppInstance = new SelectiveDisclosure(zkAppAddress);
-  //       await localDeploy();
+  describe('setOwner', () => {
+    it('sets the owner', async () => {
+      const newOwner = PrivateKey.random().toPublicKey();
+      const txn = await Mina.transaction(deployerAccount, () => {
+        zkApp.setOwner(newOwner);
+      });
+      await txn.prove();
+      await txn.sign([deployerAccount]).send();
+      expect(zkApp.owner.get().toBase58()).toEqual(newOwner.toBase58());
+    });
+  });
 
-  //       const issuerPublicKey = await zkAppInstance.issuer.get();
-  //       expect(issuerPublicKey.toBase58()).toEqual(publicKey.toBase58());
-  //     });
-  //   });
+  describe('setIssuer', () => {
+    it('sets the issuer if the caller is the owner', async () => {
+      const newOwnerPrivateKey = PrivateKey.random();
+      const newOwner = newOwnerPrivateKey.toPublicKey();
+      const newIssuer = PrivateKey.random().toPublicKey();
+      const txn = await Mina.transaction(deployerAccount, () => {
+        zkApp.setOwner(newOwner);
+      });
+      await txn.prove();
+      await txn.sign([deployerAccount]).send();
 
-  //   describe('selectivelyDisclose()', () => {
-  //     let issuerPrivateKey: PrivateKey;
-  //     let zkAppInstance: SelectiveDisclosure;
-  //     beforeEach(async () => {
-  //       issuerPrivateKey = PrivateKey.random();
-  //       const publicKey = issuerPrivateKey.toPublicKey();
-  //       zkAppInstance = new SelectiveDisclosure(zkAppAddress);
-  //       await localDeploy();
-  //     });
+      const txn2 = await Mina.transaction(deployerAccount, () => {
+        zkApp.setIssuer(newIssuer, newOwnerPrivateKey);
+      });
+      await txn2.prove();
+      await txn2.sign([deployerAccount]).send();
 
-  //     it('should verify with public key', async () => {
-  //       const holderPrivateKey = PrivateKey.random();
-  //       const holderPublicKey = holderPrivateKey.toPublicKey();
+      expect(zkApp.issuer.get().toBase58()).toEqual(newIssuer.toBase58());
+    });
 
-  //       const txn = await Mina.transaction(deployerAccount, () => {
-  //         zkAppInstance.selectivelyDisclose(
-  //           holderPrivateKey,
-  //           holderPublicKey,
-  //           new Field(100),
-  //           new Field(99),
-  //           Signature.create(issuerPrivateKey, [
-  //             ...holderPublicKey.toFields(),
-  //             new Field(100),
-  //             new Field(99),
-  //           ]),
-  //           new Field(0),
-  //           Signature.create(issuerPrivateKey, [new Field(0)])
-  //         );
-  //         zkAppInstance.sign(zkAppPrivateKey);
-  //       });
-  //       await txn.send();
-  //       const events = await zkAppInstance.fetchEvents();
-  //       expect(events[0].type).toEqual('passed-test');
-  //     });
+    it('fails to set the issuer if the owner private key is not provided', async () => {
+      const newIssuer = PrivateKey.random().toPublicKey();
 
-  //     it('should reject if bad values', async () => {
-  //       const holderPrivateKey = PrivateKey.random();
-  //       const holderPublicKey = holderPrivateKey.toPublicKey();
+      await expect(
+        Mina.transaction(deployerAccount, () => {
+          zkApp.setIssuer(newIssuer, PrivateKey.random());
+        })
+      ).rejects.toThrow();
+    });
+  });
 
-  //       expect(async () =>
-  //         Mina.transaction(deployerAccount, () => {
-  //           zkAppInstance.selectivelyDisclose(
-  //             holderPrivateKey,
-  //             holderPublicKey,
-  //             new Field(0),
-  //             new Field(1),
-  //             Signature.create(issuerPrivateKey, [
-  //               ...holderPublicKey.toFields(),
-  //               new Field(0),
-  //               new Field(0),
-  //             ]),
-  //             new Field(0),
-  //             Signature.create(issuerPrivateKey, [new Field(0)])
-  //           );
-  //           zkAppInstance.sign(zkAppPrivateKey);
-  //         })
-  //       ).rejects;
-  //     });
+  describe('disclose()', () => {
+    let issuerPrivateKey: PrivateKey;
 
-  //     it('should reject if mismatched subject', async () => {
-  //       const holderPrivateKey = PrivateKey.random();
-  //       const badHolderPublicKey = PrivateKey.random().toPublicKey();
+    beforeEach(async () => {
+      const txn = await Mina.transaction(deployerAccount, () => {
+        zkApp.setOwner(deployerAccount.toPublicKey());
+      });
+      await txn.prove();
+      await txn.sign([deployerAccount]).send();
 
-  //       expect(async () =>
-  //         Mina.transaction(deployerAccount, () => {
-  //           zkAppInstance.selectivelyDisclose(
-  //             holderPrivateKey,
-  //             badHolderPublicKey,
-  //             new Field(0),
-  //             new Field(0),
-  //             Signature.create(issuerPrivateKey, [
-  //               ...badHolderPublicKey.toFields(),
-  //               new Field(0),
-  //               new Field(0),
-  //             ]),
-  //             new Field(0),
-  //             Signature.create(issuerPrivateKey, [new Field(0)])
-  //           );
-  //           zkAppInstance.sign(zkAppPrivateKey);
-  //         })
-  //       ).rejects;
-  //     });
-  //   });
-  // });
+      issuerPrivateKey = PrivateKey.random();
+      const issuer = issuerPrivateKey.toPublicKey();
 
-  // it('generates and deploys the `Add` smart contract', async () => {
-  //   await localDeploy();
-  //   const num = zkApp.num.get();
-  //   expect(num).toEqual(Field(1));
-  // });
+      const txn2 = await Mina.transaction(deployerAccount, () => {
+        zkApp.setIssuer(issuer, deployerAccount);
+      });
+      await txn2.prove();
+      await txn2.sign([deployerAccount]).send();
+    });
 
-  // it('correctly updates the num state on the `Add` smart contract', async () => {
-  //   await localDeploy();
+    it('should verify with public key', async () => {
+      const holderPrivateKey = PrivateKey.random();
+      const holderPublicKey = holderPrivateKey.toPublicKey();
 
-  //   // update transaction
-  //   const txn = await Mina.transaction(deployerAccount, () => {
-  //     zkApp.update();
-  //   });
-  //   await txn.prove();
-  //   await txn.send();
+      const txn = await Mina.transaction(deployerAccount, () => {
+        zkApp.disclose(
+          holderPrivateKey,
+          holderPublicKey,
+          new Field(100),
+          new Field(99),
+          Signature.create(issuerPrivateKey, [
+            ...holderPublicKey.toFields(),
+            new Field(100),
+            new Field(99),
+          ]),
+          new Field(0),
+          Signature.create(issuerPrivateKey, [new Field(0)])
+        );
+      });
+      await txn.prove();
+      await txn.sign([deployerAccount]).send();
 
-  //   const updatedNum = zkApp.num.get();
-  //   expect(updatedNum).toEqual(Field(3));
-  // });
+      const events = await zkApp.fetchEvents();
+      expect(events[0].type).toEqual('passed-test');
+    });
+
+    it('should reject if bad values', async () => {
+      const holderPrivateKey = PrivateKey.random();
+      const holderPublicKey = holderPrivateKey.toPublicKey();
+
+      await expect(async () =>
+        Mina.transaction(deployerAccount, () => {
+          zkApp.disclose(
+            holderPrivateKey,
+            holderPublicKey,
+            new Field(0),
+            new Field(1),
+            Signature.create(issuerPrivateKey, [
+              ...holderPublicKey.toFields(),
+              new Field(0),
+              new Field(0),
+            ]),
+            new Field(0),
+            Signature.create(issuerPrivateKey, [new Field(0)])
+          );
+        })
+      ).rejects;
+    });
+
+    it('should reject if mismatched subject', async () => {
+      const holderPrivateKey = PrivateKey.random();
+      const badHolderPublicKey = PrivateKey.random().toPublicKey();
+
+      expect(async () =>
+        Mina.transaction(deployerAccount, () => {
+          zkApp.disclose(
+            holderPrivateKey,
+            badHolderPublicKey,
+            new Field(0),
+            new Field(0),
+            Signature.create(issuerPrivateKey, [
+              ...badHolderPublicKey.toFields(),
+              new Field(0),
+              new Field(0),
+            ]),
+            new Field(0),
+            Signature.create(issuerPrivateKey, [new Field(0)])
+          );
+          zkApp.sign(zkAppPrivateKey);
+        })
+      ).rejects;
+    });
+  });
 });
