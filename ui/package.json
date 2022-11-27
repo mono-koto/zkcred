@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
+    "patch": "grep -rl navigator.hardwareConcurrency node_modules  | xargs sed -i 's/navigator.hardwareConcurrency/1/g'",
     "ts-watch": "tsc --noEmit --incremental --watch",
     "export": "next export",
     "deploy": "next build && next export && touch out/.nojekyll  && git add -f out && git commit -m \"Deploy gh-pages\" && cd .. && git subtree push --prefix ui/out origin gh-pages"
