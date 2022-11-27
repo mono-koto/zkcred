@@ -1,17 +1,7 @@
-import Head from "next/head";
-import {
-  useAccounts,
-  useNetwork,
-  useSendTransaction,
-  useZkApp,
-} from "../components/useMina";
-import styles from "../styles/Home.module.css";
-
 import ZkappWorkerClient from "./zkAppWorkerClient";
 
-import type { Add } from "../../contracts/build/src/Add";
-import { Field, Mina, PublicKey } from "snarkyjs";
 import { useEffect, useState } from "react";
+import { Field, PublicKey } from "snarkyjs";
 let transactionFee = 0.1;
 
 export default function Home() {
@@ -61,8 +51,11 @@ export default function Home() {
         //   "B62qrBBEARoG78KLD1bmYZeEirUfpNXoMPYQboTwqmGLtfqAGLXdWpU"
         // );
         // my app
+        // const zkappPublicKey = PublicKey.fromBase58(
+        //   "B62qpRvmPpgUsRT4aTMTbGSapfP84pCP7sc4Ws8XBqvbHqTe6DtgB4r"
+        // );
         const zkappPublicKey = PublicKey.fromBase58(
-          "B62qpRvmPpgUsRT4aTMTbGSapfP84pCP7sc4Ws8XBqvbHqTe6DtgB4r"
+          "B62qrDe16LotjQhPRMwG12xZ8Yf5ES8ehNzZ25toJV28tE9FmeGq23A"
         );
         await zkappWorkerClient.initZkappInstance(zkappPublicKey);
         console.log("getting zkApp state...");
