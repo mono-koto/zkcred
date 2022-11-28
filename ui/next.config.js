@@ -21,6 +21,8 @@ const nextConfig = {
       {
         source: "/(.*)",
         headers: [
+          { key: "Access-Control-Allow-Origin", value: "*" },
+          { key: "Cross-Origin-Resource-Policy", value: "same-site" },
           {
             key: "Cross-Origin-Opener-Policy",
             value: "same-origin",
