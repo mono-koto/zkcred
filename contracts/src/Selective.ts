@@ -44,32 +44,37 @@ export class Selective extends SmartContract {
     this.issuer.set(issuer);
   }
 
-  @method disclose(
+  @method present(
     holderPrivateKey: PrivateKey,
     credentialSubjectId: PublicKey,
     credentialSubjectData1: Field,
     credentialSubjectData2: Field,
-    credentialSubjectProof: Signature,
-    issuer: Field,
-    issuerProof: Signature
+    credentialSubjectSigned: Signature
   ) {
+    // In our simplified presentation, the signer must be the subject
     const signerPublicKey = holderPrivateKey.toPublicKey();
     credentialSubjectId.assertEquals(signerPublicKey);
 
-    signerPublicKey.assertEquals(credentialSubjectId);
-
+    // The credential subject and data must be signed by the issuer
+    // that is set on the contract
     this.issuer.assertEquals(this.issuer.get());
     const issuerPublicKey = this.issuer.get();
-    credentialSubjectProof
+    credentialSubjectSigned
       .verify(issuerPublicKey, [
         ...credentialSubjectId.toFields(),
         credentialSubjectData1,
         credentialSubjectData2,
       ])
       .assertTrue();
-    issuerProof.verify(issuerPublicKey, [issuer]).assertTrue();
+
+    // Business logic here - whatever we actually want to disclose
+    // In this case, we're disclosing whether
+    // credentialSubjectData1 >= credentialSubjectData2
+    // TODO - inject or dynamically dispatch to alternative logic
     credentialSubjectData1.gte(credentialSubjectData2).assertTrue();
 
+    // If all of the above is true, we can disclose that we have passed the
+    // test without ever disclosing the private data
     this.emitEvent('passed-test', signerPublicKey);
   }
 }

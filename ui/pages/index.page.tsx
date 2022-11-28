@@ -1,9 +1,16 @@
-import dynamic from "next/dynamic";
-import Main from "../components/Main";
-// const Main = dynamic(() => import("../components/Main"), {
-//   ssr: false,
-// });
+import Link from "next/link";
 
 export default function Index() {
-  return <Main />;
+  return (
+    <div>
+      <ul>
+        <li>
+          <Link href="/issue">Issuance</Link>
+        </li>
+        <li>
+          <Link href="/presentation">Present</Link>
+        </li>
+      </ul>
+    </div>
+  );
 }

@@ -101,8 +101,15 @@ describe('Selective', () => {
 
   describe('disclose()', () => {
     let issuerPrivateKey: PrivateKey;
+    let holderPrivateKey: PrivateKey;
+    let subjectPublicKey: PublicKey;
+    let nonSubjectPublicKey: PublicKey;
 
     beforeEach(async () => {
+      holderPrivateKey = PrivateKey.random();
+      subjectPublicKey = holderPrivateKey.toPublicKey();
+      nonSubjectPublicKey = PrivateKey.random().toPublicKey();
+
       const txn = await Mina.transaction(deployerAccount, () => {
         zkApp.setOwner(deployerAccount.toPublicKey());
       });
@@ -119,23 +126,18 @@ describe('Selective', () => {
       await txn2.sign([deployerAccount]).send();
     });
 
-    it('should verify with public key', async () => {
-      const holderPrivateKey = PrivateKey.random();
-      const holderPublicKey = holderPrivateKey.toPublicKey();
-
+    it('successfully verifies with valid inputs', async () => {
       const txn = await Mina.transaction(deployerAccount, () => {
-        zkApp.disclose(
+        zkApp.present(
           holderPrivateKey,
-          holderPublicKey,
+          subjectPublicKey,
           new Field(100),
           new Field(99),
           Signature.create(issuerPrivateKey, [
-            ...holderPublicKey.toFields(),
+            ...subjectPublicKey.toFields(),
             new Field(100),
             new Field(99),
-          ]),
-          new Field(0),
-          Signature.create(issuerPrivateKey, [new Field(0)])
+          ])
         );
       });
       await txn.prove();
@@ -145,49 +147,56 @@ describe('Selective', () => {
       expect(events[0].type).toEqual('passed-test');
     });
 
-    it('should reject if bad values', async () => {
-      const holderPrivateKey = PrivateKey.random();
-      const holderPublicKey = holderPrivateKey.toPublicKey();
-
+    it('should reject if fails business logic', async () => {
       await expect(async () =>
         Mina.transaction(deployerAccount, () => {
-          zkApp.disclose(
+          zkApp.present(
             holderPrivateKey,
-            holderPublicKey,
-            new Field(0),
-            new Field(1),
+            subjectPublicKey,
+            new Field(99),
+            new Field(100),
             Signature.create(issuerPrivateKey, [
-              ...holderPublicKey.toFields(),
-              new Field(0),
-              new Field(0),
-            ]),
-            new Field(0),
-            Signature.create(issuerPrivateKey, [new Field(0)])
+              ...subjectPublicKey.toFields(),
+              new Field(99),
+              new Field(100),
+            ])
           );
         })
       ).rejects;
     });
 
-    it('should reject if mismatched subject', async () => {
-      const holderPrivateKey = PrivateKey.random();
-      const badHolderPublicKey = PrivateKey.random().toPublicKey();
-
-      expect(async () =>
+    it('should reject if signed values are wrong', async () => {
+      await expect(async () =>
         Mina.transaction(deployerAccount, () => {
-          zkApp.disclose(
+          zkApp.present(
             holderPrivateKey,
-            badHolderPublicKey,
+            subjectPublicKey,
+            new Field(100),
+            new Field(99),
+            Signature.create(issuerPrivateKey, [
+              ...subjectPublicKey.toFields(),
+              new Field(0),
+              new Field(0),
+            ])
+          );
+        })
+      ).rejects;
+    });
+
+    it('should reject if subject is not holder', async () => {
+      await expect(async () =>
+        Mina.transaction(deployerAccount, () => {
+          zkApp.present(
+            holderPrivateKey,
+            nonSubjectPublicKey,
             new Field(0),
             new Field(0),
             Signature.create(issuerPrivateKey, [
-              ...badHolderPublicKey.toFields(),
+              ...nonSubjectPublicKey.toFields(),
               new Field(0),
               new Field(0),
-            ]),
-            new Field(0),
-            Signature.create(issuerPrivateKey, [new Field(0)])
+            ])
           );
-          zkApp.sign(zkAppPrivateKey);
         })
       ).rejects;
     });

@@ -1,9 +1,15 @@
 import dynamic from "next/dynamic";
-import Main from "../components/Main";
-// const Main = dynamic(() => import("../components/Main"), {
-//   ssr: false,
-// });
+import { Suspense } from "react";
+// import Issuance from "../components/Issuance";
+const Issuance = dynamic(() => import("../components/Issuance"), {
+  suspense: true,
+  ssr: false,
+});
 
-export default function Index() {
-  return <Main />;
+export default function Issue() {
+  return (
+    <Suspense fallback={`Loading...`}>
+      <Issuance />;
+    </Suspense>
+  );
 }
