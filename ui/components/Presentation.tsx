@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Field, PublicKey, Signature } from "snarkyjs";
+import PresentButton from "./PresentButton";
 
 interface ParseResult {
   error?: string;
@@ -59,12 +60,7 @@ export default function Presentation() {
         <div className="shrink-1">&rarr;</div>
         <div className="w-6/12 flex flex-col gap-2">
           <div>
-            <button
-              className="bg-blue-500 active:bg-yellow-500 text-white p-2 rounded text-xl disabled:opacity-50"
-              disabled={!args}
-            >
-              Present
-            </button>
+            <PresentButton {...args} />
           </div>
 
           <h2 className="text-lg">Disclose Arguments:</h2>

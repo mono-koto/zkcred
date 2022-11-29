@@ -12,6 +12,12 @@
       "keyPath": "keys/berkeley-add.json",
       "fee": "0.1",
       "smartContract": "Add"
+    },
+    "berkeley-selective": {
+      "url": "https://proxy.berkeley.minaexplorer.com/graphql",
+      "keyPath": "keys/berkeley-selective.json",
+      "fee": "0.1",
+      "smartContract": "Selective"
     }
   }
 }
