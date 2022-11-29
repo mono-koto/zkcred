@@ -51,14 +51,48 @@ const functions = {
   },
 
   createPresentTransaction: async (args: ZkAppSelectivePresentPropsJSON) => {
-    console.log(args);
+    const credentialHolderPrivateKey = PrivateKey.fromJSON(
+      args.credentialHolderPrivateKeyJSON
+    );
+    const credentialSubjectId = PublicKey.fromJSON(
+      args.credentialSubjectIdJSON
+    );
+    const credentialSubjectData1 = Field.fromJSON(
+      args.credentialSubjectData1JSON
+    );
+    const credentialSubjectData2 = Field.fromJSON(
+      args.credentialSubjectData2JSON
+    );
+    const credentialSubjectSigned = Signature.fromJSON(
+      args.credentialSubjectSignedJSON
+    );
+
+    const issuerPublicKey = PublicKey.fromBase58(
+      "B62qnx57d2gX2wHxR7zmsUM2cvFprDyqFEu1FXtGgvorpYXNhVbbMLs"
+    );
+
+    console.log(
+      credentialSubjectId.toJSON(),
+      credentialSubjectData1.toJSON(),
+      credentialSubjectData2.toJSON()
+    );
+    console.log(
+      "verify",
+      credentialSubjectSigned
+        .verify(issuerPublicKey, [
+          ...credentialSubjectId.toFields(),
+          ...[credentialSubjectData1, credentialSubjectData2],
+        ])
+        .toBoolean()
+    );
+
     const transaction = await Mina.transaction(() => {
       state.zkapp!.present(
-        PrivateKey.fromJSON(args.credentialHolderPrivateKeyJSON),
-        PublicKey.fromJSON(args.credentialSubjectIdJSON),
-        Field.fromJSON(args.credentialSubjectData1JSON),
-        Field.fromJSON(args.credentialSubjectData2JSON),
-        Signature.fromJSON(args.credentialSubjectSignedJSON)
+        credentialHolderPrivateKey,
+        credentialSubjectId,
+        credentialSubjectData1,
+        credentialSubjectData2,
+        credentialSubjectSigned
       );
     });
     state.transaction = transaction;

@@ -6,7 +6,7 @@ interface ParseResult {
   value?: any;
 }
 
-const privateKey = "EKEu7Bsgg8cecNDtV1ToYQvD6hDGh5h9Q7AAFA2sF8nw7bRVUgcn";
+const privateKey = "EKEzKKCCwzMThd4BnApG5ZPuARbxvh6YeV5BXHf6CmcmjscuLwa5";
 
 const defaultText = JSON.stringify(
   JSON.parse(`{
@@ -19,7 +19,7 @@ const defaultText = JSON.stringify(
     "id": "did:example:cdf:35LB7w9ueWbagPL94T9bMLtyXDj9pX5o",
     "type": "did:example:schema:22KpkXgecryx9k7N6XN1QoN3gXwBkSU8SfyyYQG"
   },
-  "issuer": "B62qpRvmPpgUsRT4aTMTbGSapfP84pCP7sc4Ws8XBqvbHqTe6DtgB4r",
+  "issuer": "B62qnx57d2gX2wHxR7zmsUM2cvFprDyqFEu1FXtGgvorpYXNhVbbMLs",
   "credentialSubject": {
     "id": "B62qpKoe4nhvAuXPfy8MwawX5LtCyj8pbV8hMMsjPV2XdjgxQywohmw",
     "data": [100, 99]
@@ -28,30 +28,6 @@ const defaultText = JSON.stringify(
   null,
   2
 );
-
-function strToFields(s: string): Field[] {
-  console.log("strToFields", s);
-  const bytes = [...new TextEncoder().encode(s)];
-  const fields: Field[] = [];
-  for (let i = 0; i < bytes.length; i += 32) {
-    console.log(fields);
-    const slice = bytes.slice(i, i + 32);
-    console.log("2");
-    const field = Field.fromBytes(slice);
-    console.log("3");
-
-    fields.push(field);
-    console.log(fields);
-  }
-  console.log("ret", s, fields);
-  return fields;
-}
-
-function strToSignature(s: string, privateKey: PrivateKey): Signature {
-  const fields = strToFields(s);
-  console.log(fields.length);
-  return Signature.create(privateKey, fields.slice(0, 1));
-}
 
 function publicKeyToSignature(p: PublicKey, privateKey: PrivateKey) {
   return Signature.create(privateKey, p.toFields());
@@ -69,11 +45,16 @@ function addProofToVC(vc: any, privateKey: string) {
     PublicKey.fromBase58(vc.credentialSubject.id),
     issuerPrivateKey
   );
-
-  const signedSubjectData = Signature.create(issuerPrivateKey, [
+  const msg = [
     ...PublicKey.fromBase58(vc.credentialSubject.id).toFields(),
     ...vc.credentialSubject.data.map((d: number) => new Field(d)),
-  ]);
+  ];
+  const signedSubjectData = Signature.create(issuerPrivateKey, msg);
+  console.log(
+    "signed msg:",
+    msg,
+    msg.map((m) => m.toJSON())
+  );
 
   vc.proof = {
     type: "SnarkyCredentialVerification2022",

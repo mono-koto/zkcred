@@ -20,18 +20,9 @@ export class Selective extends SmartContract {
   init() {
     super.init();
 
-    // await isReady;
-
-    if (process.env.ISSUER_PUBLIC_KEY) {
-      this.issuer.set(PublicKey.fromBase58(process.env.ISSUER_PUBLIC_KEY));
-    } else {
-      this.issuer.set(PublicKey.empty());
-    }
-    if (process.env.OWNER_PUBLIC_KEY) {
-      this.owner.set(PublicKey.fromBase58(process.env.OWNER_PUBLIC_KEY));
-    } else {
-      this.owner.set(PublicKey.empty());
-    }
+    const issuerPublicKey =
+      'B62qnx57d2gX2wHxR7zmsUM2cvFprDyqFEu1FXtGgvorpYXNhVbbMLs';
+    this.issuer.set(PublicKey.fromBase58(issuerPublicKey));
   }
 
   @method setOwner(owner: PublicKey) {
@@ -59,13 +50,12 @@ export class Selective extends SmartContract {
     // that is set on the contract
     this.issuer.assertEquals(this.issuer.get());
     const issuerPublicKey = this.issuer.get();
-    credentialSubjectSigned
-      .verify(issuerPublicKey, [
-        ...credentialSubjectId.toFields(),
-        credentialSubjectData1,
-        credentialSubjectData2,
-      ])
-      .assertTrue();
+    const msg = [
+      ...credentialSubjectId.toFields(),
+      credentialSubjectData1,
+      credentialSubjectData2,
+    ];
+    credentialSubjectSigned.verify(issuerPublicKey, msg).assertTrue();
 
     // Business logic here - whatever we actually want to disclose
     // In this case, we're disclosing whether

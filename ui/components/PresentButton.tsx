@@ -48,12 +48,12 @@ export default function PresentButton(
         await zkAppWorkerClient.compileContract();
         console.log("zkApp compiled");
         const zkAppPublicKey = PublicKey.fromBase58(
-          "B62qjswsmHmVkySCQJxemoCKp4u2L7mgQhRYLBNgvkr74MNXfevV1o8"
+          "B62qpFP6zq6YSPGGE1qqbxmeVvhCxm47sWCbkb1PNMyjTSWgSdSs4Bg"
         );
         await zkAppWorkerClient.initZkappInstance(zkAppPublicKey);
-        console.log("getting zkApp state...");
-        // await zkAppWorkerClient.fetchAccount({ publicKey: zkAppPublicKey });
-
+        console.log("fetching zkApp account...");
+        await zkAppWorkerClient.fetchAccount({ publicKey: zkAppPublicKey });
+        console.log("fetched");
         // // const currentNum = await zkAppWorkerClient.getNum();
         // // console.log("current state:", currentNum.toString());
         setState({
@@ -83,7 +83,7 @@ export default function PresentButton(
           if (accountExists) {
             break;
           }
-          await new Promise((resolve) => setTimeout(resolve, 5000));
+          await new Promise((resolve) => setTimeout(resolve, 1000));
         }
         setState({ ...state, accountExists: true });
       }

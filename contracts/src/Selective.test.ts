@@ -49,11 +49,10 @@ describe('Selective', () => {
   });
 
   it('generates and deploys the `Selective` smart contract', async () => {
-    const owner = zkApp.owner.get();
-    expect(owner.toBase58()).toEqual(PublicKey.empty().toBase58());
-
     const issuer = zkApp.issuer.get();
-    expect(issuer.toBase58()).toEqual(PublicKey.empty().toBase58());
+    expect(issuer.toBase58()).toEqual(
+      'B62qnx57d2gX2wHxR7zmsUM2cvFprDyqFEu1FXtGgvorpYXNhVbbMLs'
+    );
   });
 
   describe('setOwner', () => {

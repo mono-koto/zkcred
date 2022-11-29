@@ -20,6 +20,6 @@
     "allowSyntheticDefaultImports": true,
     "isolatedModules": true
   },
-  "include": ["./src"],
+  "include": ["./src", "./scripts"],
   "exclude": ["./src/**/*.test.ts"]
 }
