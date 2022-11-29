@@ -1,9 +1,16 @@
-import { fetchAccount, PublicKey, PrivateKey, Field } from "snarkyjs";
+import {
+  fetchAccount,
+  PublicKey,
+  PrivateKey,
+  Field,
+  Signature,
+} from "snarkyjs";
 
 import type {
   ZkappWorkerRequest,
   ZkappWorkerReponse,
   WorkerFunctions,
+  ZkAppSelectivePresentProps,
 } from "./zkAppSelectiveWorker";
 
 export default class zkAppSelectiveWorkerClient {
@@ -42,8 +49,14 @@ export default class zkAppSelectiveWorkerClient {
     });
   }
 
-  createPresentTransaction() {
-    return this._call("createPresentTransaction", {});
+  createPresentTransaction(args: ZkAppSelectivePresentProps) {
+    return this._call("createPresentTransaction", {
+      credentialHolderPrivateKeyJSON: args.credentialHolderPrivateKey.toJSON(),
+      credentialSubjectIdJSON: args.credentialSubjectId.toJSON(),
+      credentialSubjectData1JSON: args.credentialSubjectData1.toJSON(),
+      credentialSubjectData2JSON: args.credentialSubjectData2.toJSON(),
+      credentialSubjectSignedJSON: args.credentialSubjectSigned.toJSON(),
+    });
   }
 
   provePresentTransaction() {
@@ -66,7 +79,9 @@ export default class zkAppSelectiveWorkerClient {
   nextId: number;
 
   constructor() {
-    this.worker = new Worker(new URL("./zkappWorker.ts", import.meta.url));
+    this.worker = new Worker(
+      new URL("./zkAppSelectiveWorker.ts", import.meta.url)
+    );
     this.promises = {};
     this.nextId = 0;
 

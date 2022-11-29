@@ -2,22 +2,12 @@ import { MouseEventHandler, useEffect, useState } from "react";
 import zkAppSelectiveWorkerClient from "./zkAppSelectiveWorkerClient";
 import { PublicKey, PrivateKey, Field, Signature } from "snarkyjs";
 import { sendTransaction } from "snarkyjs/dist/node/lib/mina";
+import { ZkAppSelectivePresentProps } from "./zkAppSelectiveWorker";
 let transactionFee = 0.1;
 
-interface PresentProps {
-  credentialSubjectId?: PublicKey;
-  credentialSubjectData1?: Field;
-  credentialSubjectData2?: Field;
-  credentialSubjectProof?: Signature;
-}
-
-export default function PresentButton(props: PresentProps) {
-  const enabled =
-    props.credentialSubjectId &&
-    props.credentialSubjectData1 &&
-    props.credentialSubjectData2 &&
-    props.credentialSubjectProof;
-
+export default function PresentButton(
+  props: Partial<ZkAppSelectivePresentProps>
+) {
   let [state, setState] = useState({
     zkAppWorkerClient: null as null | zkAppSelectiveWorkerClient,
     hasWallet: null as null | boolean,
@@ -62,10 +52,10 @@ export default function PresentButton(props: PresentProps) {
         );
         await zkAppWorkerClient.initZkappInstance(zkAppPublicKey);
         console.log("getting zkApp state...");
-        await zkAppWorkerClient.fetchAccount({ publicKey: zkAppPublicKey });
+        // await zkAppWorkerClient.fetchAccount({ publicKey: zkAppPublicKey });
 
-        // const currentNum = await zkAppWorkerClient.getNum();
-        // console.log("current state:", currentNum.toString());
+        // // const currentNum = await zkAppWorkerClient.getNum();
+        // // console.log("current state:", currentNum.toString());
         setState({
           ...state,
           zkAppWorkerClient,
@@ -111,7 +101,16 @@ export default function PresentButton(props: PresentProps) {
     await state.zkAppWorkerClient!.fetchAccount({
       publicKey: state.publicKey!,
     });
-    await state.zkAppWorkerClient!.createPresentTransaction();
+    await state.zkAppWorkerClient!.createPresentTransaction({
+      credentialHolderPrivateKey: PrivateKey.fromBase58(
+        "EKEnFP8BP7tAgxwGFuGSq1XjhmVMXhP1CkZfmWWkaz98boET8bwG"
+      ),
+
+      credentialSubjectId: props.credentialSubjectId!,
+      credentialSubjectData1: props.credentialSubjectData1!,
+      credentialSubjectData2: props.credentialSubjectData2!,
+      credentialSubjectSigned: props.credentialSubjectSigned!,
+    });
     console.log("creating proof...");
     await state.zkAppWorkerClient!.provePresentTransaction();
     console.log("getting Transaction JSON...");
@@ -130,6 +129,21 @@ export default function PresentButton(props: PresentProps) {
     setState({ ...state, creatingTransaction: false });
   };
   // -------------------------------------------------------
+
+  const enabled =
+    props.credentialSubjectId &&
+    props.credentialSubjectData1 &&
+    props.credentialSubjectData2 &&
+    props.credentialSubjectSigned &&
+    state.hasBeenSetup;
+  console.log(
+    enabled,
+    props.credentialSubjectId,
+    props.credentialSubjectData1,
+    props.credentialSubjectData2,
+    props.credentialSubjectSigned,
+    state.hasBeenSetup
+  );
 
   return (
     <button

@@ -22,7 +22,7 @@ const defaultText = JSON.stringify(
   "issuer": "B62qpRvmPpgUsRT4aTMTbGSapfP84pCP7sc4Ws8XBqvbHqTe6DtgB4r",
   "credentialSubject": {
     "id": "B62qpKoe4nhvAuXPfy8MwawX5LtCyj8pbV8hMMsjPV2XdjgxQywohmw",
-    "data": [1, 2]
+    "data": [100, 99]
   }
 }`),
   null,

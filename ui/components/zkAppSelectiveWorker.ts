@@ -50,14 +50,15 @@ const functions = {
     state.zkapp = new state.Selective!(publicKey);
   },
 
-  createPresentTransaction: async (args: {}) => {
+  createPresentTransaction: async (args: ZkAppSelectivePresentPropsJSON) => {
+    console.log(args);
     const transaction = await Mina.transaction(() => {
       state.zkapp!.present(
-        PrivateKey.random(),
-        PrivateKey.random().toPublicKey(),
-        new Field(1),
-        new Field(2),
-        Signature.create(PrivateKey.random(), [])
+        PrivateKey.fromJSON(args.credentialHolderPrivateKeyJSON),
+        PublicKey.fromJSON(args.credentialSubjectIdJSON),
+        Field.fromJSON(args.credentialSubjectData1JSON),
+        Field.fromJSON(args.credentialSubjectData2JSON),
+        Signature.fromJSON(args.credentialSubjectSignedJSON)
       );
     });
     state.transaction = transaction;
@@ -71,6 +72,22 @@ const functions = {
 };
 
 // ---------------------------------------------------------------------------------------
+
+export interface ZkAppSelectivePresentProps {
+  credentialHolderPrivateKey: PrivateKey;
+  credentialSubjectId: PublicKey;
+  credentialSubjectData1: Field;
+  credentialSubjectData2: Field;
+  credentialSubjectSigned: Signature;
+}
+
+export interface ZkAppSelectivePresentPropsJSON {
+  credentialHolderPrivateKeyJSON: any;
+  credentialSubjectIdJSON: any;
+  credentialSubjectData1JSON: any;
+  credentialSubjectData2JSON: any;
+  credentialSubjectSignedJSON: any;
+}
 
 export type WorkerFunctions = keyof typeof functions;
 

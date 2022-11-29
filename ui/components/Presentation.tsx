@@ -11,14 +11,13 @@ interface Arguments {
   credentialSubjectId: PublicKey;
   credentialSubjectData1: Field;
   credentialSubjectData2: Field;
-  credentialSubjectProof: Signature;
+  credentialSubjectSigned: Signature;
 }
 
 export default function Presentation() {
   const [parsedValue, setParsedValue] = useState<ParseResult>({});
 
   const handleChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
-    console.log(event.currentTarget.value);
     let vc: any = {};
     try {
       vc = JSON.parse(event.currentTarget.value);
@@ -40,7 +39,7 @@ export default function Presentation() {
       credentialSubjectId: PublicKey.fromJSON(credentialSubject.id),
       credentialSubjectData1: Field.fromJSON(credentialSubject.data[0]),
       credentialSubjectData2: Field.fromJSON(credentialSubject.data[1]),
-      credentialSubjectProof: Signature.fromJSON(proof.credentialSubjectData),
+      credentialSubjectSigned: Signature.fromJSON(proof.credentialSubjectData),
     };
   }
 
@@ -63,7 +62,9 @@ export default function Presentation() {
             <PresentButton {...args} />
           </div>
 
-          <h2 className="text-lg">Disclose Arguments:</h2>
+          <h2 className="text-lg text-slate-600">
+            <code>present()</code> Arguments:
+          </h2>
 
           <div>
             <div className="text-sm">credentialSubjectId (PublicKey)</div>
@@ -84,10 +85,10 @@ export default function Presentation() {
             </div>
           </div>
           <div>
-            <div className="text-sm">credentialSubjectProof (Signature)</div>
+            <div className="text-sm">credentialSubjectSigned (Signature)</div>
             <div className="overflow-scroll whitespace-pre font-mono">
               {JSON.stringify(
-                args?.credentialSubjectProof?.toJSON() || {},
+                args?.credentialSubjectSigned?.toJSON() || {},
                 null,
                 2
               )}
