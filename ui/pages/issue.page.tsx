@@ -9,7 +9,7 @@ const Issuance = dynamic(() => import("../components/Issuance"), {
 export default function Issue() {
   return (
     <Suspense fallback={`Loading...`}>
-      <Issuance />;
+      <Issuance />
     </Suspense>
   );
 }

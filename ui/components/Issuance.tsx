@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Field, PrivateKey, PublicKey, Signature } from "snarkyjs";
+import { useEffect, useState } from "react";
+import { Field, isReady, PrivateKey, PublicKey, Signature } from "snarkyjs";
 
 interface ParseResult {
   error?: string;
@@ -8,8 +8,7 @@ interface ParseResult {
 
 const privateKey = "EKEzKKCCwzMThd4BnApG5ZPuARbxvh6YeV5BXHf6CmcmjscuLwa5";
 
-const defaultText = JSON.stringify(
-  JSON.parse(`{
+const defaultUnsignedCredentialText = `{
   "@context": [
     "https://www.w3.org/2018/credentials/v1",
     "https://www.w3.org/2018/credentials/examples/v1"
@@ -24,7 +23,10 @@ const defaultText = JSON.stringify(
     "id": "B62qpKoe4nhvAuXPfy8MwawX5LtCyj8pbV8hMMsjPV2XdjgxQywohmw",
     "data": [100, 99]
   }
-}`),
+}`;
+
+const defaultUnsignedCredential = JSON.stringify(
+  JSON.parse(defaultUnsignedCredentialText),
   null,
   2
 );
@@ -58,10 +60,9 @@ function addProofToVC(vc: any, privateKey: string) {
 
   vc.proof = {
     type: "SnarkyCredentialVerification2022",
-    issuer: signedIssuer.toJSON(),
-    credentialSubjectId: signedSubjectId.toJSON(),
-    credentialSubjectData: signedSubjectData.toJSON(),
+    credentialSubject: signedSubjectData.toJSON(),
   };
+  return vc;
 }
 
 export default function Issuance() {
@@ -73,6 +74,18 @@ export default function Issuance() {
   ) => {
     setIssuerPrivateKey(event.target.value);
   };
+
+  useEffect(() => {
+    (async () => {
+      await isReady;
+      setParsedValue({
+        value: addProofToVC(
+          JSON.parse(defaultUnsignedCredentialText),
+          issuerPrivateKey
+        ),
+      });
+    })();
+  }, []);
 
   const handleChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
     console.log(event.currentTarget.value);
@@ -102,7 +115,7 @@ export default function Issuance() {
             spellCheck={false}
             rows={30}
             onChange={handleChange}
-            defaultValue={defaultText}
+            defaultValue={defaultUnsignedCredential}
           ></textarea>
           <div className="text-sm mb-2 text-red-500">{parsedValue.error}</div>
 

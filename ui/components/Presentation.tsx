@@ -39,7 +39,7 @@ export default function Presentation() {
       credentialSubjectId: PublicKey.fromJSON(credentialSubject.id),
       credentialSubjectData1: Field.fromJSON(credentialSubject.data[0]),
       credentialSubjectData2: Field.fromJSON(credentialSubject.data[1]),
-      credentialSubjectSigned: Signature.fromJSON(proof.credentialSubjectData),
+      credentialSubjectSigned: Signature.fromJSON(proof.credentialSubject),
     };
   }
 
