@@ -278,7 +278,7 @@ var __dirname = "/";
 /******/ 	
 /******/ 	/* webpack/runtime/publicPath */
 /******/ 	!function() {
-/******/ 		__webpack_require__.p = "/ZKVC//_next/";
+/******/ 		__webpack_require__.p = "/zkcred//_next/";
 /******/ 	}();
 /******/ 	
 /******/ 	/* webpack/runtime/importScripts chunk loading */

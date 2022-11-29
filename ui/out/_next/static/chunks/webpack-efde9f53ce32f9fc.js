@@ -112,7 +112,7 @@
 /******/ 		// This function allow to reference async chunks
 /******/ 		__webpack_require__.u = function(chunkId) {
 /******/ 			// return url for filenames based on template
-/******/ 			return "static/chunks/" + (chunkId === 829 ? "cc8f0cfa" : chunkId) + "." + {"122":"710b7fff5b5f480a","319":"b6e5b5c59aee0b5d","634":"1fc013be8f4a1539","829":"ba53b43d4c939170"}[chunkId] + ".js";
+/******/ 			return "static/chunks/" + (chunkId === 829 ? "cc8f0cfa" : chunkId) + "." + {"122":"cda73d6ec595d1bb","319":"b6e5b5c59aee0b5d","634":"1fc013be8f4a1539","829":"ba53b43d4c939170"}[chunkId] + ".js";
 /******/ 		};
 /******/ 	}();
 /******/ 	
@@ -228,7 +228,7 @@
 /******/ 	
 /******/ 	/* webpack/runtime/publicPath */
 /******/ 	!function() {
-/******/ 		__webpack_require__.p = "/ZKVC//_next/";
+/******/ 		__webpack_require__.p = "/zkcred//_next/";
 /******/ 	}();
 /******/ 	
 /******/ 	/* webpack/runtime/jsonp chunk loading */
